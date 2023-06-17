@@ -9,6 +9,7 @@
 #include "common/exception.h"
 #include "gtest/gtest.h"
 #include "primer/trie.h"
+#include <iostream>
 
 namespace bustub {
 
@@ -193,12 +194,14 @@ TEST(TrieTest, MixedTest) {
     std::string value = fmt::format("value-{:#08}", i);
     trie = trie.Put<std::string>(key, value);
   }
+  std::cout << "1" << std::endl;
   auto trie_full = trie;
   for (uint32_t i = 0; i < 23333; i += 2) {
     std::string key = fmt::format("{:#05}", i);
     std::string value = fmt::format("new-value-{:#08}", i);
     trie = trie.Put<std::string>(key, value);
   }
+  std::cout << "2" << std::endl;
   auto trie_override = trie;
   for (uint32_t i = 0; i < 23333; i += 3) {
     std::string key = fmt::format("{:#05}", i);
@@ -206,6 +209,7 @@ TEST(TrieTest, MixedTest) {
   }
   auto trie_final = trie;
 
+  std::cout << "3" << std::endl;
   // verify trie_full
   for (uint32_t i = 0; i < 23333; i++) {
     std::string key = fmt::format("{:#05}", i);
@@ -213,6 +217,7 @@ TEST(TrieTest, MixedTest) {
     ASSERT_EQ(*trie_full.Get<std::string>(key), value);
   }
 
+  std::cout << "4" << std::endl;
   // verify trie_override
   for (uint32_t i = 0; i < 23333; i++) {
     std::string key = fmt::format("{:#05}", i);
@@ -225,6 +230,7 @@ TEST(TrieTest, MixedTest) {
     }
   }
 
+  std::cout << "5" << std::endl;
   // verify final trie
   for (uint32_t i = 0; i < 23333; i++) {
     std::string key = fmt::format("{:#05}", i);
@@ -238,6 +244,7 @@ TEST(TrieTest, MixedTest) {
       ASSERT_EQ(*trie_final.Get<std::string>(key), value);
     }
   }
+  std::cout << "6" << std::endl;
 }
 
 TEST(TrieTest, PointerStability) {

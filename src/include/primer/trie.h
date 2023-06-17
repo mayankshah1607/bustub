@@ -105,6 +105,23 @@ class Trie {
   // Create a new trie with the given root.
   explicit Trie(std::shared_ptr<const TrieNode> root) : root_(std::move(root)) {}
 
+  auto DeepClone(const std::shared_ptr<const TrieNode>& node) const -> std::shared_ptr<const TrieNode> {
+      auto t = node->Clone();
+      for (auto &[k, v]: t->children_) {
+          t->children_[k] = DeepClone(v);
+      }
+      return t;
+  }
+  
+  template <class T>
+  auto DeepClone(const std::shared_ptr<const TrieNodeWithValue<T>>& node) const -> std::shared_ptr<const TrieNodeWithValue<T>> {
+      auto t = node->Clone();
+      for (auto &[k, v]: t->children_) {
+          t->children_[k] = DeepClone(v);
+      }
+      return t;
+  }
+
  public:
   // Create an empty trie.
   Trie() = default;
@@ -124,6 +141,14 @@ class Trie {
   // Remove the key from the trie. If the key does not exist, return the original trie.
   // Otherwise, returns the new trie.
   auto Remove(std::string_view key) const -> Trie;
+
+  auto Clone() const -> Trie {
+      auto t = root_->Clone();
+      for (auto &[k, v]: t->children_) {
+          t->children_[k] = DeepClone(v);
+      }
+      return Trie(std::shared_ptr<TrieNode>(std::move(t)));
+  };
 };
 
 }  // namespace bustub

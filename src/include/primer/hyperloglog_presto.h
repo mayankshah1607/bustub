@@ -22,6 +22,7 @@
 #include <vector>
 
 #include "common/util/hash_util.h"
+#include "primer/hyperloglog.h"
 
 /** @brief Dense bucket size. */
 static constexpr int DENSE_BUCKET_SIZE = 4;
@@ -82,6 +83,20 @@ class HyperLogLogPresto {
     return 0;
   }
 
+  /** @brief Function that calculates index. */
+  auto CalcIndex(std::bitset<BITSET_CAPACITY> bset) const -> size_t;
+
+  /** @brief Function that calculates leading zeroes. */
+  auto CalcLeadingZeroes(const std::bitset<BITSET_CAPACITY> &bset) const -> uint32_t;
+
+  auto CalcOverflow(const std::bitset<TOTAL_BUCKET_SIZE> &bset) const -> std::bitset<OVERFLOW_BUCKET_SIZE>;
+
+  auto CalcDense(const std::bitset<TOTAL_BUCKET_SIZE> &bset) const -> std::bitset<DENSE_BUCKET_SIZE>;
+
+  auto SetRegister(uint16_t idx, uint32_t value) -> void;
+
+  auto GetRegisterValue(uint16_t idx) -> uint32_t;
+
   /** @brief Structure holding dense buckets (or also known as registers). */
   std::vector<std::bitset<DENSE_BUCKET_SIZE>> dense_bucket_;
 
@@ -90,6 +105,9 @@ class HyperLogLogPresto {
 
   /** @brief Storing cardinality value */
   uint64_t cardinality_;
+
+  /** @brief Number of leading bits. */
+  int16_t b_;
 
   // TODO(student) - can add more data structures as required
 };

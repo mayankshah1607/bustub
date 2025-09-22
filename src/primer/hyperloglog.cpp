@@ -11,12 +11,19 @@
 //===----------------------------------------------------------------------===//
 
 #include "primer/hyperloglog.h"
+#include <cmath>  // Required for std::pow and std::round
+#include <cstddef>
 
 namespace bustub {
 
 /** @brief Parameterized constructor. */
 template <typename KeyType>
-HyperLogLog<KeyType>::HyperLogLog(int16_t n_bits) : cardinality_(0) {}
+HyperLogLog<KeyType>::HyperLogLog(int16_t n_bits) : cardinality_(0), registers_(1 << n_bits, 0), b_(n_bits) {
+  if (b_ < 0 || b_ > BITSET_CAPACITY) {
+    cardinality_ = 0;
+    return;
+  }
+}
 
 /**
  * @brief Function that computes binary.
@@ -26,8 +33,7 @@ HyperLogLog<KeyType>::HyperLogLog(int16_t n_bits) : cardinality_(0) {}
  */
 template <typename KeyType>
 auto HyperLogLog<KeyType>::ComputeBinary(const hash_t &hash) const -> std::bitset<BITSET_CAPACITY> {
-  /** @TODO(student) Implement this function! */
-  return {0};
+  return std::bitset<BITSET_CAPACITY>(hash);
 }
 
 /**
@@ -38,7 +44,11 @@ auto HyperLogLog<KeyType>::ComputeBinary(const hash_t &hash) const -> std::bitse
  */
 template <typename KeyType>
 auto HyperLogLog<KeyType>::PositionOfLeftmostOne(const std::bitset<BITSET_CAPACITY> &bset) const -> uint64_t {
-  /** @TODO(student) Implement this function! */
+  for (auto i = BITSET_CAPACITY - 1 - b_; i >= 0; i--) {
+    if (bset[i]) {
+      return BITSET_CAPACITY - b_ - i;
+    }
+  }
   return 0;
 }
 
@@ -50,6 +60,20 @@ auto HyperLogLog<KeyType>::PositionOfLeftmostOne(const std::bitset<BITSET_CAPACI
 template <typename KeyType>
 auto HyperLogLog<KeyType>::AddElem(KeyType val) -> void {
   /** @TODO(student) Implement this function! */
+  auto hash = CalculateHash(val);   // compute hash
+  auto bset = ComputeBinary(hash);  // convert hash to bitset
+
+  size_t register_idx = CalcIndex(bset);
+  auto p = PositionOfLeftmostOne(bset);  // compute position of leftmost one
+  registers_[register_idx] = std::max(registers_[register_idx], p);
+}
+
+template <typename KeyType>
+auto HyperLogLog<KeyType>::CalcIndex(std::bitset<BITSET_CAPACITY> bset) const -> size_t {
+  const std::bitset<BITSET_CAPACITY> mask = (~std::bitset<BITSET_CAPACITY>(0)) << (BITSET_CAPACITY - b_);
+  std::bitset<BITSET_CAPACITY> extracted = bset & mask;
+  extracted >>= (BITSET_CAPACITY - b_);
+  return extracted.to_ulong();
 }
 
 /**
@@ -57,7 +81,17 @@ auto HyperLogLog<KeyType>::AddElem(KeyType val) -> void {
  */
 template <typename KeyType>
 auto HyperLogLog<KeyType>::ComputeCardinality() -> void {
-  /** @TODO(student) Implement this function! */
+  if (b_ < 0) {
+    cardinality_ = 0;
+    return;
+  }
+  auto dsum = 0.0;
+  for (size_t i = 0; i < registers_.size(); i++) {
+    double term = 1.0 / (1ULL << registers_[i]);
+    dsum += term;
+  }
+  auto m = registers_.size();
+  cardinality_ = static_cast<size_t>(std::floor((CONSTANT * m * m) / dsum));
 }
 
 template class HyperLogLog<int64_t>;
